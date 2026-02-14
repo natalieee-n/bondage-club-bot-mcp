@@ -10,6 +10,9 @@ cp .env.example .env
 docker compose up --build
 ```
 
+MCP endpoint (Streamable HTTP):
+- `http://127.0.0.1:8080/mcp`
+
 ## Notes
 
 - This project is deployment-oriented and not packaged as a library.

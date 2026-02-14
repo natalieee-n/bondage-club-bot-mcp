@@ -190,4 +190,16 @@ async def get_recent_events(limit: int = 20) -> List[dict]:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    transport = os.getenv("MCP_TRANSPORT", "http").strip().lower()
+    if transport in {"streamable-http", "streamable_http"}:
+        transport = "http"
+
+    if transport == "http":
+        host = os.getenv("MCP_HOST", "0.0.0.0")
+        port = int(os.getenv("MCP_PORT", "8080"))
+        path = os.getenv("MCP_PATH", "/mcp")
+        if not path.startswith("/"):
+            path = f"/{path}"
+        mcp.run(transport="http", host=host, port=port, path=path)
+    else:
+        mcp.run(transport=transport)
