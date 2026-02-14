@@ -1,0 +1,13 @@
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bondage-club-bot-mcp
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python server.py

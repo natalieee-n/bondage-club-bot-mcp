@@ -1,0 +1,9 @@
+{
+  "Name": "MyRoom",
+  "Description": "",
+  "Background": "Introduction",
+  "Limit": "10",
+  "Private": false,
+  "Locked": false,
+  "Language": "EN"
+}
