@@ -21,7 +21,6 @@ MCP endpoint (Streamable HTTP):
 - MCP tools provided by `server.py`:
   - `start_bot`
   - `stop_bot`
-  - `login`
   - `get_bot_status`
   - `send_chat_message`
   - `get_recent_events`

@@ -525,16 +525,6 @@ async def stop_bot() -> Dict[str, Any]:
 
 
 @mcp.tool()
-async def login(
-    username: str = "",
-    password: str = "",
-    timeout: float = 15.0,
-) -> Dict[str, Any]:
-    """Login bot account with optional credential override."""
-    return await runtime.login(username=username, password=password, timeout=timeout)
-
-
-@mcp.tool()
 async def get_bot_status() -> Dict[str, Any]:
     """Get connection/login/chatroom/member state."""
     return await runtime.status()
