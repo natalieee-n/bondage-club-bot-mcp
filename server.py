@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 from collections import deque
 from datetime import datetime, timezone
@@ -99,7 +98,6 @@ class BotRuntime:
         self,
         username: str,
         password: str,
-        chatroom_config_path: str,
         appearance_code: str = "",
         server_url: str = "https://bondage-club-server.herokuapp.com/",
         origin: str = "https://www.bondage-europe.com",
@@ -112,17 +110,9 @@ class BotRuntime:
                     "member_number": self._bot.player.get("MemberNumber"),
                 }
 
-            config_file = Path(chatroom_config_path)
-            if not config_file.is_absolute():
-                config_file = (BASE_DIR / config_file).resolve()
-
-            with open(config_file, "r", encoding="utf-8") as f:
-                room_config = json.load(f)
-
             self._bot = MCPBCBot(
                 username=username,
                 password=password,
-                chatroom_settings=room_config,
                 appearance_code=appearance_code,
                 server_url=server_url,
                 origin=origin,
@@ -132,7 +122,6 @@ class BotRuntime:
             return {
                 "ok": True,
                 "message": "bot started",
-                "chatroom": room_config.get("Name", ""),
             }
 
     async def login(self, username: str = "", password: str = "", timeout: float = 15.0) -> Dict[str, Any]:
@@ -499,7 +488,6 @@ mcp = FastMCP("bondage-club-bot-mcp")
 async def start_bot(
     username: str = "",
     password: str = "",
-    chatroom_config_path: str = "chatroom_config.json",
     appearance_code: str = "",
     server_url: str = "https://bondage-club-server.herokuapp.com/",
     origin: str = "https://www.bondage-europe.com",
@@ -511,7 +499,6 @@ async def start_bot(
     return await runtime.start(
         username=user,
         password=pwd,
-        chatroom_config_path=chatroom_config_path,
         appearance_code=appearance,
         server_url=server_url,
         origin=origin,

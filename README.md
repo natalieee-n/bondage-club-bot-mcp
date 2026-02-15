@@ -6,7 +6,7 @@ FastMCP server for Bondage Club bot.
 
 ```bash
 cp .env.example .env
-# edit .env and chatroom_config.json
+# edit .env
 docker compose up --build
 ```
 
