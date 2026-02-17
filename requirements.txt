@@ -1,3 +1,2 @@
 fastmcp
 python-dotenv
-git+https://github.com/natalieee-n/bondage-club-bot-core.git@v0.1.1
