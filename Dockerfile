@@ -14,7 +14,7 @@ COPY requirements.txt /app/requirements.txt
 
 RUN set -eux; \
     pip install -r requirements.txt; \
-    pip install --no-cache-dir --upgrade "git+https://github.com/natalieee-n/bondage-club-bot-core.git@12-adding-supports-for-mcp-tools"
+    pip install --no-cache-dir --upgrade "git+https://github.com/natalieee-n/bondage-club-bot-core.git@v0.1.2"
 
 COPY . /app
 
