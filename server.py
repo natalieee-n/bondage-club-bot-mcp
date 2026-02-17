@@ -524,6 +524,40 @@ class BotRuntime:
             },
         }
 
+    async def unlock_member(
+        self,
+        member_number: int = -1,
+        player_index: int = -1,
+        timeout: float = 10.0,
+    ) -> Dict[str, Any]:
+        bot, err = await self._ensure_logged_in(timeout=timeout)
+        if err:
+            return err
+        if not bot:
+            return {"ok": False, "error": "bot is not running"}
+        if not bot.current_chatroom:
+            return {"ok": False, "error": "bot is not in chatroom"}
+        if hasattr(bot, "unlock_member_locks"):
+            return await bot.unlock_member_locks(member_number=member_number, player_index=player_index)
+        return {"ok": False, "error": "core bot does not support unlock_member_locks"}
+
+    async def release_member(
+        self,
+        member_number: int = -1,
+        player_index: int = -1,
+        timeout: float = 10.0,
+    ) -> Dict[str, Any]:
+        bot, err = await self._ensure_logged_in(timeout=timeout)
+        if err:
+            return err
+        if not bot:
+            return {"ok": False, "error": "bot is not running"}
+        if not bot.current_chatroom:
+            return {"ok": False, "error": "bot is not in chatroom"}
+        if hasattr(bot, "release_member_total"):
+            return await bot.release_member_total(member_number=member_number, player_index=player_index)
+        return {"ok": False, "error": "core bot does not support release_member_total"}
+
 
 runtime = BotRuntime()
 mcp = FastMCP("bondage-club-bot-mcp")
@@ -672,6 +706,26 @@ async def get_room_member_detail(member_number: int) -> Dict[str, Any]:
 async def reset_appearance_by_code(appearance_code: str, timeout: float = 15.0) -> Dict[str, Any]:
     """Reset current account appearance using a BC appearance code (LZString Base64)."""
     return await runtime.reset_appearance_by_code(appearance_code=appearance_code, timeout=timeout)
+
+
+@mcp.tool()
+async def unlock_member(
+    member_number: int = -1,
+    player_index: int = -1,
+    timeout: float = 10.0,
+) -> Dict[str, Any]:
+    """Unlock all non-owner/non-lover locks for a room member. Use member_number or player_index (0-based)."""
+    return await runtime.unlock_member(member_number=member_number, player_index=player_index, timeout=timeout)
+
+
+@mcp.tool()
+async def release_member(
+    member_number: int = -1,
+    player_index: int = -1,
+    timeout: float = 10.0,
+) -> Dict[str, Any]:
+    """Release a room member by removing all worn Item* groups. Use member_number or player_index (0-based)."""
+    return await runtime.release_member(member_number=member_number, player_index=player_index, timeout=timeout)
 
 
 if __name__ == "__main__":
