@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from collections import deque
 from datetime import datetime, timezone
@@ -7,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from lzstring import LZString
 
 from bondage_club_bot_core import BCBot
 
@@ -98,7 +100,6 @@ class BotRuntime:
         self,
         username: str,
         password: str,
-        appearance_code: str = "",
         server_url: str = "https://bondage-club-server.herokuapp.com/",
         origin: str = "https://www.bondage-europe.com",
     ) -> Dict[str, Any]:
@@ -113,7 +114,6 @@ class BotRuntime:
             self._bot = MCPBCBot(
                 username=username,
                 password=password,
-                appearance_code=appearance_code,
                 server_url=server_url,
                 origin=origin,
             )
@@ -479,6 +479,50 @@ class BotRuntime:
             return {"ok": False, "error": "bot is not running"}
         return {"ok": True, "chatroom": bot.current_chatroom}
 
+    async def reset_appearance_by_code(self, appearance_code: str, timeout: float = 15.0) -> Dict[str, Any]:
+        bot, err = await self._ensure_logged_in(timeout=timeout)
+        if err:
+            return err
+        if not bot:
+            return {"ok": False, "error": "bot is not running"}
+
+        code = appearance_code.strip()
+        if not code:
+            return {"ok": False, "error": "appearance_code is empty"}
+
+        try:
+            raw = LZString.decompressFromBase64(code)
+            if not raw:
+                return {"ok": False, "error": "invalid appearance_code: decompress failed"}
+            decoded = json.loads(raw)
+            if not isinstance(decoded, list):
+                return {"ok": False, "error": "invalid appearance_code: decoded payload is not a list"}
+        except Exception as exc:
+            return {"ok": False, "error": f"invalid appearance_code: {exc}"}
+
+        bot.appearance = decoded
+        bot._appearance_reset_done = False
+        await bot.reset_appearance()
+
+        slots = {
+            item.get("G") or item.get("Group"): item.get("A") or item.get("Name")
+            for item in decoded
+            if isinstance(item, dict)
+        }
+        return {
+            "ok": True,
+            "message": "appearance reset requested",
+            "appearance_item_count": len(decoded),
+            "slots": {
+                "Cloth": slots.get("Cloth"),
+                "ClothLower": slots.get("ClothLower"),
+                "Bra": slots.get("Bra"),
+                "Panties": slots.get("Panties"),
+                "Shoes": slots.get("Shoes"),
+                "Socks": slots.get("Socks"),
+            },
+        }
+
 
 runtime = BotRuntime()
 mcp = FastMCP("bondage-club-bot-mcp")
@@ -488,18 +532,15 @@ mcp = FastMCP("bondage-club-bot-mcp")
 async def start_bot(
     username: str = "",
     password: str = "",
-    appearance_code: str = "",
     server_url: str = "https://bondage-club-server.herokuapp.com/",
     origin: str = "https://www.bondage-europe.com",
 ) -> Dict[str, Any]:
-    """Start core bot runtime. Falls back to BC_USERNAME/BC_PASSWORD/APPEARANCE_CODE from env."""
+    """Start core bot runtime. Falls back to BC_USERNAME/BC_PASSWORD from env."""
     user = username or os.getenv("BC_USERNAME", "")
     pwd = password or os.getenv("BC_PASSWORD", "")
-    appearance = appearance_code or os.getenv("APPEARANCE_CODE", "")
     return await runtime.start(
         username=user,
         password=pwd,
-        appearance_code=appearance,
         server_url=server_url,
         origin=origin,
     )
@@ -623,6 +664,12 @@ async def get_character_data(member_number: int = 0) -> Dict[str, Any]:
 async def get_room_member_detail(member_number: int) -> Dict[str, Any]:
     """Get detailed data for a specific room member from synchronized character cache."""
     return await runtime.get_room_member_detail(member_number=member_number)
+
+
+@mcp.tool()
+async def reset_appearance_by_code(appearance_code: str, timeout: float = 15.0) -> Dict[str, Any]:
+    """Reset current account appearance using a BC appearance code (LZString Base64)."""
+    return await runtime.reset_appearance_by_code(appearance_code=appearance_code, timeout=timeout)
 
 
 if __name__ == "__main__":
