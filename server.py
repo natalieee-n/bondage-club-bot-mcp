@@ -1,19 +1,19 @@
 import asyncio
 import json
-import os
 from collections import deque
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from dotenv import load_dotenv
 from fastmcp import FastMCP
 from lzstring import LZString
 
 from bondage_club_bot_core import BCBot
-
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
+from config import (
+    DEFAULT_ORIGIN,
+    DEFAULT_SERVER_URL,
+    get_bc_credentials,
+    get_mcp_runtime_config,
+)
 
 
 class MCPBCBot(BCBot):
@@ -100,8 +100,8 @@ class BotRuntime:
         self,
         username: str,
         password: str,
-        server_url: str = "https://bondage-club-server.herokuapp.com/",
-        origin: str = "https://www.bondage-europe.com",
+        server_url: str = DEFAULT_SERVER_URL,
+        origin: str = DEFAULT_ORIGIN,
     ) -> Dict[str, Any]:
         async with self._lock:
             if self.running() and self._bot:
@@ -134,10 +134,11 @@ class BotRuntime:
         if password:
             bot.password = password
 
+        env_user, env_pwd = get_bc_credentials()
         if not bot.username:
-            bot.username = os.getenv("BC_USERNAME", "")
+            bot.username = env_user
         if not bot.password:
-            bot.password = os.getenv("BC_PASSWORD", "")
+            bot.password = env_pwd
 
         if not bot.username or not bot.password:
             return {"ok": False, "error": "username/password is empty"}
@@ -532,12 +533,13 @@ mcp = FastMCP("bondage-club-bot-mcp")
 async def start_bot(
     username: str = "",
     password: str = "",
-    server_url: str = "https://bondage-club-server.herokuapp.com/",
-    origin: str = "https://www.bondage-europe.com",
+    server_url: str = DEFAULT_SERVER_URL,
+    origin: str = DEFAULT_ORIGIN,
 ) -> Dict[str, Any]:
     """Start core bot runtime. Falls back to BC_USERNAME/BC_PASSWORD from env."""
-    user = username or os.getenv("BC_USERNAME", "")
-    pwd = password or os.getenv("BC_PASSWORD", "")
+    env_user, env_pwd = get_bc_credentials()
+    user = username or env_user
+    pwd = password or env_pwd
     return await runtime.start(
         username=user,
         password=pwd,
@@ -673,16 +675,8 @@ async def reset_appearance_by_code(appearance_code: str, timeout: float = 15.0) 
 
 
 if __name__ == "__main__":
-    transport = os.getenv("MCP_TRANSPORT", "http").strip().lower()
-    if transport in {"streamable-http", "streamable_http"}:
-        transport = "http"
-
-    if transport == "http":
-        host = os.getenv("MCP_HOST", "0.0.0.0")
-        port = int(os.getenv("MCP_PORT", "8080"))
-        path = os.getenv("MCP_PATH", "/mcp")
-        if not path.startswith("/"):
-            path = f"/{path}"
-        mcp.run(transport="http", host=host, port=port, path=path)
+    mcp_cfg = get_mcp_runtime_config()
+    if mcp_cfg.transport == "http":
+        mcp.run(transport="http", host=mcp_cfg.host, port=mcp_cfg.port, path=mcp_cfg.path)
     else:
-        mcp.run(transport=transport)
+        mcp.run(transport=mcp_cfg.transport)
