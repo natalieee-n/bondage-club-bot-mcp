@@ -10,8 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY . /app
+COPY requirements.txt /app/requirements.txt
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN set -eux; \
+    pip install -r requirements.txt; \
+    pip install --no-cache-dir --upgrade "git+https://github.com/natalieee-n/bondage-club-bot-core.git@12-adding-supports-for-mcp-tools"
+
+COPY . /app
 
 CMD ["python", "server.py"]
